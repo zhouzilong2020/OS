@@ -64,6 +64,11 @@ class Scheduler():
             if tem > 0 and tem < min:
                 validElevator = elevator
         return validElevator
-    
-S = Scheduler()
-S.run()
+
+
+def main():
+    S = Scheduler()
+    S.run()
+
+if __name__ == '__main__':
+    main()

@@ -1,5 +1,24 @@
 import tkinter as tk  # 使用Tkinter前需要先导入
  
+
+
+
+
+
+class app:
+    def __init__(self):
+        super().__init__()
+        self.shedulor = Shedulor()
+
+        # 建立窗口
+        self.window = tk.Tk()
+        self.window.title('Elevator Simulator Designed by Zilong Zhou')
+        self.window.geometry('800x600')  # 这里的乘是小x   
+
+    def function(i):
+        print(f"{i}")
+
+
 # 第1步，实例化object，建立窗口window
 window = tk.Tk()
  
@@ -7,7 +26,7 @@ window = tk.Tk()
 window.title('My Window')
  
 # 第3步，设定窗口的大小(长 * 宽)
-window.geometry('500x300')  # 这里的乘是小x
+window.geometry('800x600')  # 这里的乘是小x
  
 # # 第4步，在图形界面上创建一个标签label用以显示并放置
 # var1 = tk.StringVar()  # 创建变量，用var1用来接收鼠标点击具体选项的内容
@@ -21,15 +40,14 @@ window.geometry('500x300')  # 这里的乘是小x
  
 
 
-def function():
-    print("asdasdsa")
+def function(i):
+    print(f"{i}")
 
 # 第5步，创建一个按钮并放置，点击按钮调用print_selection函数
 f1 = tk.Frame()
 for i in range(20):
     # Button(fm1, text='Top').pack(side=TOP, anchor=W, fill=X, expand=YES)
-    
-    b = tk.Button(f1, text=f'{i+1}', width=2, height=1, command= function).grid()
+    b = tk.Button(f1, text=f'{i+1}', width=2, height=1, command= lambda:function(i = f'{i+1}')).grid()
     # b.pack()
 f1.pack(side='left', fill='both', expand='yes')
 
@@ -41,6 +59,9 @@ for i in range(20):
     # b.pack()
 f2.pack(side='left', fill='both', expand='yes')
  
+
+
+
 # 第7步，创建Listbox并为其添加内容
 var2 = tk.StringVar()
 var2.set((1,2,3,4)) # 为变量var2设置值
