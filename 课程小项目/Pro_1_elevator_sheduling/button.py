@@ -15,7 +15,7 @@ def btn2_change_btn1():
         btn1['state'] = 'disabled'
     elif btn1['state'] == 'disabled':
         btn1['state'] = 'normal'
-    
+
 root = tk.Tk()
 
 btn1 = tk.Button(root, text='REOOT', fg="blue", state=tk.DISABLED, width=12, height=1)

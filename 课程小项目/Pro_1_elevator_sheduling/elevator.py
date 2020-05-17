@@ -3,7 +3,6 @@ import time
 import queue
 
 class Elevator(threading.Thread):
-
     def __init__(self, elevatorID, maxLevel = 20, curLevel = 1, runningTime = 1):
         threading.Thread.__init__(self)
         self.elevatorID = elevatorID   
@@ -28,7 +27,6 @@ class Elevator(threading.Thread):
             self.full.acquire()
             self.moveToTarget()
             self.newTarget()
-        
     
     def newTarget(self):
         if len(self.upStops) != 0:
@@ -41,13 +39,17 @@ class Elevator(threading.Thread):
     def openDoor(self):
         # 到站
         self.full.acquire()
-        print(f"open door at {self.curLevel}")
+        print(f"elevator{self.elevatorID} open door at {self.curLevel}")
         time.sleep(1)
         
 
     # 移动到电梯当前的最高、低楼层
     def moveToTarget(self):
         self.full.release()
+        if self.curTarget == self.curLevel:
+            self.openDoor()
+            self.downStops.remove(self.curLevel)
+
         # 当没有达到目标楼层的时候，则一直移动
         while(self.curLevel != self.curTarget):
             time.sleep(self.runningTime)
@@ -65,7 +67,6 @@ class Elevator(threading.Thread):
                 if self.curLevel in self.downStops:
                     self.openDoor()
                     self.downStops.remove(self.curLevel)
-
         self.curDirection = 0
             
     # 为电梯规划新的停靠楼层，inside确定是否是内部按下的
@@ -90,9 +91,6 @@ class Elevator(threading.Thread):
                 self.curTarget = self.downStops[0]
         
         self.full.release()
-
-        
-        
 
     def __str__(self):
         return f'{self.name} at {self.curLevel}'

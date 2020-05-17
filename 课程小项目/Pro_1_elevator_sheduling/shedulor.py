@@ -22,20 +22,11 @@ class Scheduler():
         threads = []
         for elevator in self.elevators:
             elevator.start()
-        while 1:
-            request = int(input())
-            if request > 0:
-                self.schedule(request, 1)
-            else:
-                self.schedule(-request, -1)
-
-        for elevator in self.elevators:
-            elevator.join()
-    
+        
 
     # 在某一部电梯内部按下了一个按钮
     def insideButton(self, eleID, level):
-        self.elevators[eleID].newStop(level, inside = True)
+        self.elevators[eleID].newStop(level)
 
     # 为外部按键按下的第level层的dir方向进行规划
     def schedule(self, level, dir):
@@ -48,7 +39,7 @@ class Scheduler():
 
     # 基于look调度算法 获取最优电梯
     def getValidElevator(self, level, dir):
-        min = self.maxLevel
+        min = self.maxLevel+2
         validElevator = None
         for elevator in self.elevators:
 
@@ -61,8 +52,9 @@ class Scheduler():
                 tem = (level - elevator.curLevel)*elevator.curDirection
             
             elevator.workLock.release() # 互斥访问锁
-            if tem > 0 and tem < min:
+            if tem >= 0 and tem < min:
                 validElevator = elevator
+                min = tem
         return validElevator
 
 
