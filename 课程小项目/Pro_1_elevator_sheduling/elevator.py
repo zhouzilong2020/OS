@@ -3,7 +3,7 @@ import time
 import queue
 
 class Elevator(threading.Thread):
-    def __init__(self, elevatorID, maxLevel = 20, curLevel = 1, runningTime = 1):
+    def __init__(self, elevatorID, insideButton, outsideButton, maxLevel = 20, curLevel = 1, runningTime = 1):
         threading.Thread.__init__(self)
         self.elevatorID = elevatorID   
         self.runningTime = runningTime  #运行速度
@@ -11,9 +11,9 @@ class Elevator(threading.Thread):
         self.curTarget = curLevel       #表示当前电梯的目标楼层, 记录了同方向上的最高（低）的楼层
         self.maxLevel = maxLevel        #电梯能够到达的最高楼层
         self.curDirection = 0           #电梯的当前运行方向，1代表上行，-1代表下行，0代表当前闲置
-        self.buttonStatus = []          #电梯内部的按键情况, 0表示未按下, 1表示按下
-        for i in range(maxLevel):   
-            self.buttonStatus.append(0)
+
+        self.insideButton = insideButton         #电梯内部的按键情况是一个GUI的控制句柄
+        self.outsideButton = outsideButton       #电梯外部按键的GUI控制句柄
 
         #线程间数据交流
         self.upStops = []             #电梯收到的上行停靠请求
@@ -39,19 +39,46 @@ class Elevator(threading.Thread):
     def openDoor(self):
         # 到站
         self.full.acquire()
+        self.insideButton["level"]["text"] = f"{self.curLevel}"
+        self.insideButton["status"]["text"] = "«»"
+        time.sleep(0.3)
+        self.insideButton["status"]["text"] = "« »"
+        time.sleep(0.3)
+        self.insideButton["status"]["text"] = "«  »"
+        time.sleep(0.3)
+        self.insideButton["button"][self.curLevel-1]["state"] = "active"
+
+        if self.curDirection == 1:
+            self.outsideButton[self.curLevel-1]["up"]["state"] = "active"
+        elif self.curDirection == -1:
+            self.outsideButton[self.curLevel-1]["down"]["state"] = "active"
+        else:
+            self.outsideButton[self.curLevel-1]["up"]["state"] = "active"
+            self.outsideButton[self.curLevel-1]["down"]["state"] = "active"
+
         print(f"elevator{self.elevatorID} open door at {self.curLevel}")
-        time.sleep(1)
         
+    def renewScreen(self):
+        if self.curDirection == -1:
+            self.insideButton["status"]["text"] = "⇣"
+        elif self.curDirection == 1:
+            self.insideButton["status"]["text"] = "⇡"
+        else:
+            self.insideButton["status"]["text"] = "⎯"
+        self.insideButton["level"]["text"] = f"{self.curLevel}"
+
 
     # 移动到电梯当前的最高、低楼层
     def moveToTarget(self):
         self.full.release()
         if self.curTarget == self.curLevel:
+            self.curDirection = 0
             self.openDoor()
             self.downStops.remove(self.curLevel)
 
         # 当没有达到目标楼层的时候，则一直移动
         while(self.curLevel != self.curTarget):
+            self.renewScreen()
             time.sleep(self.runningTime)
             self.curLevel += self.curDirection
             print(f"elevator{self.elevatorID} from {self.curLevel-self.curDirection} to {self.curLevel}")
@@ -68,6 +95,7 @@ class Elevator(threading.Thread):
                     self.openDoor()
                     self.downStops.remove(self.curLevel)
         self.curDirection = 0
+        self.renewScreen()
             
     # 为电梯规划新的停靠楼层，inside确定是否是内部按下的
     def newStop(self, level):
