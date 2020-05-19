@@ -2,9 +2,8 @@ from tkinter import *
 
 def moverectangle(event):  # 绑定方向键
     while True:
-        canvas.after(100)
-        canvas.move("r1", 0, -10)
-        canvas.update()
+        
+        canvas.move("r1", 0, -1)
     if event.keysym == "Up":
         canvas.move(1, 0, -1)  # 移动的是 ID为1的事物【move（2,0,-5）则移动ID为2的事物】，使得横坐标加0，纵坐标减5
     elif event.keysym == "Down":

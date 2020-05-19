@@ -3,23 +3,33 @@ import time
 import queue
 from elevator import Elevator
 
-exitFlag = 0
 
-class Scheduler():
+
+class Scheduler(threading.Thread):
     def __init__(self, insideButton, outsideButton, elevatorNum = 5, maxLevel = 20):
-        self.elevators = []         #存放各个电梯
-        self.Lock = threading.Lock()
-        self.maxLevel = maxLevel
-       
+        super().__init__()
+        self.elevators = []             # 存放各个电梯
+        self.maxLevel = maxLevel        # 最大楼层数
+        self.mailbox = queue.Queue(30) # 进程间通信，用于完成对外部按钮的更新
+        self.outsideButton = outsideButton
         for i in range(elevatorNum):
             # 实例化电梯
-            self.elevators.append(Elevator(i, insideButton = insideButton[f"{i}"], outsideButton = outsideButton,maxLevel = maxLevel))
+            self.elevators.append(Elevator(i, insideButton = insideButton[f"{i}"],  mailbox = self.mailbox, maxLevel = maxLevel))
 
     def run(self):
         threads = []
         for elevator in self.elevators:
             elevator.start()
-        
+        while 1:
+            # 电梯到站后发送信息传递给调度器
+            level, dirc = self.mailbox.get(block = True)
+            if dirc == 1:
+                self.outsideButton[level-1]["up"]["state"] = "active"
+            elif dirc == -1:
+                self.outsideButton[level-1]["down"]["state"] = "active"
+            else:
+                self.outsideButton[level-1]["up"]["state"] = "active"
+                self.outsideButton[level-1]["down"]["state"] = "active"
 
     # 在某一部电梯内部按下了一个按钮
     def insideButton(self, eleID, level):

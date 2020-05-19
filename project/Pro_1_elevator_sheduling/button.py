@@ -26,3 +26,4 @@ btn2.pack()
 btn1.bind('<Button-1>', btn1_change_btn1)
 
 root.mainloop()
+

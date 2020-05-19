@@ -1,45 +1,59 @@
 import tkinter as tk  # 使用Tkinter前需要先导入
-from tkmacosx import Button
 import functools as ft
+import tkinter.messagebox as mb
 from shedulor import *
+import time
 
 class GUI:
     def __init__(self):
         # 建立窗口
         self.window = tk.Tk()
-        self.window.title('Elevator Simulator Designed by Zilong Zhou')
-        self.window.geometry('800x600')  # 这里的乘是小x
+        self.window.title('Elevator Simulator by Zilong Zhou 1851201')
+        # self.window.geometry('800x600')  # 这里的乘是小x
         # 存放电梯内部显示的相关句柄
         self.insideButton = {}
         # 最放外部的按键
         self.outsideButton = []
+        # 输出调度信息的面板
+        self.output = tk.Text()
+        self.output.pack(side = 'bottom', expand='no',fill= 'y')
+        self.output.insert(1.0,"elevator schedule detile will be shown here")
+        tk.Label(text='Schedule Detile:').pack(side = 'bottom', expand='no',fill= 'both')
         for i in range(5):
             self.buildInsideButton(i)
         self.buildOusideButton()
 
-        self.scheduler = Scheduler(insideButton = self.insideButton, outsideButton = self.outsideButton)
-        self.scheduler.run()
+        self.scheduler = Scheduler(output = self.output,insideButton = self.insideButton, outsideButton = self.outsideButton)
+        self.scheduler.start()
         # 显示窗口
         self.window.mainloop()
+    
+    def openDoor(self, id):
+        self.insideButton[f'{id}']["button"][-2]['state'] = 'disable'
+        self.insideButton[f'{id}']["button"][-2]['state'] = 'normal'
+
 
     def insideButtonPush(self, mes):
         id, level = mes
         button = self.insideButton[f"{id}"]["button"][level]
-        button["bg"]="green"
         button["state"]="disabled"
         # 调度
+        self.output.insert(1.0, f"elevator{id} is push {level+1} from inside\n")
+        time.sleep(0.2)
         self.scheduler.insideButton(id, level+1)
-        print(mes)
 
     def outsideButtonPush(self, mes):
         level, dir = mes
-        print(mes)
+        if dir == 1:
+            message = f"{level+1}△ is push from outside\n"
+        else: 
+            message = f"{level+1}▽ is push from outside\n"
+        self.output.insert(1.0, message)
+        time.sleep(0.2)
         if dir == 1:
             self.outsideButton[level]["up"]["state"] = "disable"
-            self.outsideButton[level]["up"]["bg"] = "red"
         else:
             self.outsideButton[level]["down"]["state"] = "disable"
-            self.outsideButton[level]["down"]["bg"] = "red"
         self.scheduler.schedule(level+1, dir)
 
 
@@ -49,25 +63,23 @@ class GUI:
         f = tk.Frame()
         button_ele = [ i for i in range(20)]
         for i in button_ele:
+            # 楼层标示
             a = tk.Label(f, text=f"{i+1}",width=2, height=2)
+            # 上行按键
             up = tk.Button(f, text=f'△', width=2, height=1,bg='silver') 
             up["command"] = ft.partial(self.outsideButtonPush, mes = [i, 1])
-
+            # 下行按键
             down = tk.Button(f, text=f'▽', width=2, height=1,bg='silver') 
             down["command"] = ft.partial(self.outsideButtonPush, mes = [i, -1])
-
+            # 保留对按键的修改句柄
             self.outsideButton.append({"up":up, "down":down})
-            
+            # 排布按键
+            a.grid(column = 4 if cnt%2 == 0 else 0, row = 10-int(cnt/2))
+            up.grid(column = 5 if cnt%2 == 0 else 1, row = 10-int(cnt/2))
+            down.grid(column = 6 if cnt%2 == 0 else 2, row = 10-int(cnt/2))
+            # 累计排布按键计数
             cnt +=1
-            if cnt <= 10:
-                a.grid(column = 0, row = cnt+1)
-                up.grid(column = 1, row=cnt+1)
-                down.grid(column = 2, row=cnt+1)
-            else:
-                a.grid(column = 4, row = cnt-9)
-                up.grid(column = 5, row=cnt-9)
-                down.grid(column = 6, row=cnt-9)
-        f.pack(side='left', fill='x', expand='yes')
+        f.pack(side='left', fill='y', expand='no', padx = 2, pady = 2)
 
     # 建立第i个电梯的内部按钮
     def buildInsideButton(self, i):
@@ -91,15 +103,20 @@ class GUI:
             # 按钮的回调函数
             b["command"] = ft.partial(self.insideButtonPush, mes = i)
             self.insideButton[f"{i[0]}"]["button"].append(b)
+            b.grid(column = 2 if cnt%2 ==0 else 1, row = 11-int(cnt/2))
             cnt +=1
-            if cnt <= 10:       # 排列成两行
-                b.grid(column = 1, row=cnt+1)
-            else:
-                b.grid(column = 2, row=cnt-9)
-        f.pack(side='left', fill='x', expand='yes', padx = 5, pady = 5)
         
-
-
-
+        # 电梯内部开门按钮
+        openDoor = tk.Button(f, text=f'⩤⩥',width=2, height=2)
+        openDoor.grid(column = 1, row = 1)
+        self.insideButton[f"{i[0]}"]["button"].append(openDoor)  #button[-2]为开门按钮
+        # 电梯内部关门按钮
+        closeDoor = tk.Button(f, text=f'⩥⩤',width=2, height=2)
+        closeDoor.grid(column = 2, row = 1)
+        self.insideButton[f"{i[0]}"]["button"].append(closeDoor)  #button[-1]为关门按钮
+        # 报警按钮
+        tk.Button(f, text=f'SOS',width=4, height=2, command = lambda : mb.showwarning('SOS', f'someone in elevator{i[0]} needs help!')).grid(column = 1, row = 0, columnspan = 2)
+        f.pack(side='left', fill='y', expand='no', padx = 2, pady = 2)
+        
 gui = GUI()
 
