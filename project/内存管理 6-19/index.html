@@ -4,11 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='script.js'></script>
-    <style></style>
+    <link href='style.css' rel="stylesheet" type="text/css">
     <title>Memeroy Management Scheduler</title>
 </head>
 <body>
-    <h1>haha</h1>
-    <h2>asdasnishidianaa1sdlaod</h2>
+    <header style="text-align:center;"><h1>动态内存分配模拟器</h1></header>
+
+    <table id="idleTable" border='1'>
+        <caption>空闲区表</caption>
+        <tr>
+            <th>起始地址</th>
+            <th>终止地址</th>
+            <th>长度</th>
+        </tr>
+        <tr>
+            <td>a</td>
+            <td>a</td>
+            <td>a</td>
+        </tr>
+    </table>
+
+    <table id="busyTable" border='1'>
+        <caption>占用区表</caption>
+        <tr>
+            <th>起始地址</th>
+            <th>终止地址</th>
+            <th>长度</th>
+        </tr>
+        <tr>
+            <td>a</td>
+            <td>a</td>
+            <td>a</td>
+        </tr>
+    </table>
+    <div>
+        <form action="">
+            <input type="text" placeholder="请输入需要分配的进程大小" id="size">
+            <button id="randon"><label for="button">随机执行</label></button>
+        </form>
+    </div>
+
+    <footer>
+        <div id="author">Zilong Zhou 1851201</div>
+        <div id="e-mail">529620861@qq.com</div>
+        <div id="university">Tongji University</div>
+        <div id="date">2020.06.09</div>
+    </footer>
 </body>
 </html>

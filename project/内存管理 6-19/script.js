@@ -122,7 +122,7 @@ function MemoryManager(maxSize){
                             }
                         }
                         flag = 0;
-                        break;
+                        break; 
                     }
                     p = p.next;
                 }
