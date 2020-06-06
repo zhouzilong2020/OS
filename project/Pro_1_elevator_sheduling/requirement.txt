@@ -1,6 +1,0 @@
-python3
-threading
-time
-queue
-tkinter
-functools
