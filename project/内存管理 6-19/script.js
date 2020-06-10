@@ -80,6 +80,8 @@ function MemoryManager(maxSize){
                     else{   //剩余区域大于申请区域，只需要修改表项即可
                         p.next.element["size"] -= size;
                         p.next.element["bg"] += size;
+                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
+                        renew(item, to)
                     }
                     return true;
                 }
@@ -111,12 +113,21 @@ function MemoryManager(maxSize){
                 // 检查有无可以合并的区域
                 while(p.next != null){
                     if( ed == p.next.element["bg"]){ //新区域的尾可以旧区域头链接
+                        
+                        var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
+                        
                         p.next.element['bg'] = bg;
                         p.next.element['size'] += (ed - bg);
+                        
+                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
+                        renew(from, to);
+
                         flag = 0;
                         break;
                     }
                     else if( bg == p.next.element["ed"]){ //新区域的头可以旧区域尾链接
+                        var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
+                        
                         p.next.element['ed'] = ed;
                         p.next.element['size'] += (ed - bg);
                         // 还需要检查能否进一步合并，新区域可能起到一个桥梁作用，合并前后两个区域
@@ -129,6 +140,9 @@ function MemoryManager(maxSize){
                                 delete tem;
                             }
                         }
+                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
+                        renew(from, to);
+
                         flag = 0;
                         break; 
                     }
@@ -142,6 +156,13 @@ function MemoryManager(maxSize){
                             let newNode = new ListNode({"bg":bg, "ed":ed, "size":ed-bg})
                             newNode.next = p.next;
                             p.next = newNode;
+
+                            // 更新页面
+                            let newRow = document.getElementById("idleTable").insertRow(-1);
+                            newRow.insertCell(0).innerHTML = bg;
+                            newRow.insertCell(1).innerHTML = ed;
+                            newRow.insertCell(2).innerHTML = ed-bg;
+                        
                             break;
                         }
                         p = p.next;
@@ -166,13 +187,31 @@ var manager;
 document.addEventListener('DOMContentLoaded', function(){
     manager = new MemoryManager(MAX_SIZE);
     init()
+//a/sd/asd/asd/as//
+
 })
 
-function init(){
-    let newRow = document.getElementById("idleTable").insertRow(-1);
+function init(){          
+    var newRow = document.getElementById("idleTable").insertRow(-1);
+    newRow.className = "Node"
     newRow.insertCell(0).innerHTML = 0;
     newRow.insertCell(1).innerHTML = MAX_SIZE;
     newRow.insertCell(2).innerHTML = MAX_SIZE;
+}
+
+function renew(from, to){
+    var tb = document.getElementById("idleTable");
+    var rows = tb.rows;
+    for(var i = 0; i < rows.length; i++){
+        var bg = rows[i].cells[0].innerHTML;
+        var ed = rows[i].cells[1].innerHTML;
+        var size = rows[i].cells[2].innerHTML;
+        if( from["bg"] == bg && from["ed"] == ed && from["size"] == size){
+            bg = to["bg"];
+            ed = to["ed"];
+            size = to["size"];
+        }
+    }
 }
 
 function isValid(size){
@@ -195,7 +234,9 @@ function newJob(){
     let size = document.getElementById("input_size").value;
     if(isValid(size)){
         size = parseInt(size);
-        let mes = manager.allocate(size, cnt++);
+        if(!manager.allocate(size, cnt++)){
+            window.alert("当前内存碎片过多，请释放一些内存再试一试！");
+        }
     }
 }
 
