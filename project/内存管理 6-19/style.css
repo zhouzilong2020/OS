@@ -7,6 +7,7 @@
     padding: 0;
 }
   */
+
 footer{
     background-color:black;
     color:white;
@@ -19,6 +20,20 @@ footer{
     bottom: 0px;
 }
 
-table{
+#idleTable, #busyTable{
+    margin:5px;
+    float:left;
     border-collapse: collapse;
+    position: relative;
+    width: 100%;
+    text-align: center;
+    padding:15px;
+    padding-top:1px;
+    border:1px solid black
+}
+
+.input{
+    margin:5px;
+    position: relative;
+    text-align:center;
 }

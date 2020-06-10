@@ -53,7 +53,7 @@ function MemoryManager(maxSize){
     //TODO waiting list!!!!
     // 初始化空闲表
     this.idleTable.insert( {"bg": 0, "ed": this.maxSize, "size": this.maxSize} )
-
+    
     if (typeof MemoryManager._initialized == "undefined") {
         // 分配内存
         MemoryManager.prototype.allocate = function(size, PID){
@@ -61,7 +61,17 @@ function MemoryManager(maxSize){
             while(p.next != null){
                 if(p.next.element["size"] >= size){ //找到了第一个合适分配的内存
                     // 更新已使用内存表项
-                    this.busyTable.insert({"bg": p.next.element["bg"], "ed": p.next.element["bg"]+size, "PID" : PID})
+                    let item = {"bg": p.next.element["bg"], "ed": p.next.element["bg"]+size, "PID" : PID, "size":size};
+                    this.busyTable.insert(item)
+
+                    // 更新页面
+                    let newRow = document.getElementById("busyTable").insertRow(-1);
+                    newRow.insertCell(0).innerHTML = item["PID"];
+                    newRow.insertCell(1).innerHTML = item["bg"];
+                    newRow.insertCell(2).innerHTML = item["ed"];
+                    newRow.insertCell(3).innerHTML = item["size"];
+                    newRow.insertCell(4).innerHTML =  "<td><button onclick=\"del(this)\">结束本进程</button></td>";
+
                     if(p.next.element["size"] == size){ //剩余区域等于申请区域，则需要从表单中删除
                         let tem = p.next;
                         p.next = tem.next;
@@ -96,8 +106,6 @@ function MemoryManager(maxSize){
                 }
                 p = p.next;
             }
-
-
             if(flag){ //成功找到了这样的进程，释放内存资源
                 p = this.idleTable.head;
                 // 检查有无可以合并的区域
@@ -150,6 +158,52 @@ function MemoryManager(maxSize){
         }
     }
 }
-var a  = new LinkedList()
-var manager = new MemoryManager(640)
-1+1;
+
+const MAX_SIZE = 640;
+var cnt = 0;
+var manager;
+
+document.addEventListener('DOMContentLoaded', function(){
+    manager = new MemoryManager(MAX_SIZE);
+    init()
+})
+
+function init(){
+    let newRow = document.getElementById("idleTable").insertRow(-1);
+    newRow.insertCell(0).innerHTML = 0;
+    newRow.insertCell(1).innerHTML = MAX_SIZE;
+    newRow.insertCell(2).innerHTML = MAX_SIZE;
+}
+
+function isValid(size){
+    if(!isNaN(size)){
+        if (size > MAX_SIZE){
+            window.alert("输入内存过大，当前最大空间为"+MAX_SIZE);
+            return false;
+        }
+        else if(size <= 0){
+            window.alert("请输入合法的内存大小")
+            return false;
+        }
+        return true;
+    }
+    window.alert("请输入一个合法数字(1-"+MAX_SIZE+")");
+    return false;
+}
+
+function newJob(){
+    let size = document.getElementById("input_size").value;
+    if(isValid(size)){
+        size = parseInt(size);
+        let mes = manager.allocate(size, cnt++);
+    }
+}
+
+function del(e){
+    var tr = e.parentElement.parentElement;
+    var index = tr.rowIndex;
+    var table = document.getElementById("busyTable");
+    let PID = tr.firstElementChild.innerHTML;
+    manager.free(PID);
+    table.deleteRow(index);
+}
