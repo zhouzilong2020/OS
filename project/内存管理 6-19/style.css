@@ -32,6 +32,15 @@ footer{
     border:1px solid black
 }
 
+#session1{
+    position: relative;
+    float:left;
+}
+#session2{
+    position: relative;
+    float:left;
+}
+
 .input{
     margin:5px;
     position: relative;

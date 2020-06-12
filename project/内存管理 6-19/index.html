@@ -13,25 +13,24 @@
     
     <div class="input">
         <input  type="text" placeholder="请输入需要分配的进程大小" id="input_size"> 
-        <button id="add" type="input" onclick="newJob()" >添加</button>
+        <button id="add-btn" type="input"  >添加</button>
     </div>
-    <div class="display">
+    <div id="session1">
+        <h2 style="text-align: center;">最佳适应算法</h2>
         <table id="idleTable" >
-            <caption>空闲区表</caption>
+            <caption style="padding: 10px;">空闲区表</caption>
             <tr >
                 <th>起始地址</th>
                 <th>终止地址</th>
                 <th>长度</th>
             </tr>
-            <tr>
-                <td class="bg">bg</td>
-                <td class="ed">ed</td>
-                <td class="size">size</td>
+            <tr class ="Node">
+                <td class="bg">bg</td><td class="ed">ed</td><td class="size">size</td>
             </tr>
         </table>
 
         <table id="busyTable">
-            <caption>占用区表</caption>
+            <caption style="padding: 10px;">占用区表</caption>
             <tr>
                 <th>PID</th>
                 <th>起始地址</th>
@@ -47,6 +46,56 @@
                 <td><button onclick="del(this)">结束本进程</button></td>
             </tr>
         </table>
+
+        <ui>
+            <li>当前内存分配情况：<a>a</a></li>
+            <li>当前空闲内存情况：<a>a</a></li>
+            <li>分配失败次数：<a>a</a></li>
+        </ui>
+        <hr>
+        <div></div>
+     </div>
+
+    <div id="session2">
+        <h2 style="text-align: center;">首次适应算法</h2>
+        <table id="idleTable" >
+            <caption style="padding: 10px;">空闲区表</caption>
+            <tr >
+                <th>起始地址</th>
+                <th>终止地址</th>
+                <th>长度</th>
+            </tr>
+            <tr>
+                <td class="bg">bg</td>
+                <td class="ed">ed</td>
+                <td class="size">size</td>
+            </tr>
+        </table>
+
+        <table id="busyTable">
+            <caption style="padding: 10px;">占用区表</caption>
+            <tr>
+                <th>PID</th>
+                <th>起始地址</th>
+                <th>终止地址</th>
+                <th>长度</th>
+                <th>终止进程</th>
+            </tr>
+            <tr>
+                <td class="PID">10</td>
+                <td class="bg_address">a</td>
+                <td class="ed_address">a</td>
+                <td class="length">a</td>
+                <td><button onclick="del(this)">结束本进程</button></td>
+            </tr>
+        </table>
+
+        <ui>
+            <li>当前内存分配情况：<a>a</a></li>
+            <li>当前空闲内存情况：<a>a</a></li>
+            <li>分配失败次数：<a>a</a></li>
+        </ui>
+        <hr>
     </div>
 
 

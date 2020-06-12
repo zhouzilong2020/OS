@@ -32,16 +32,6 @@ function LinkedList(){
             }
             return false;
         }
-
-        // 展示当前链表项
-        LinkedList.prototype.display = function(){
-            let p = this.head;
-            while(p.next != null){
-                console.log(p.next.element)
-                p = p.next;
-            }
-        }
-
     };
 }
 
@@ -63,7 +53,7 @@ function MemoryManager(maxSize){
                     // 更新已使用内存表项
                     let item = {"bg": p.next.element["bg"], "ed": p.next.element["bg"]+size, "PID" : PID, "size":size};
                     this.busyTable.insert(item)
-
+                    var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
                     // 更新页面
                     let newRow = document.getElementById("busyTable").insertRow(-1);
                     newRow.insertCell(0).innerHTML = item["PID"];
@@ -81,7 +71,7 @@ function MemoryManager(maxSize){
                         p.next.element["size"] -= size;
                         p.next.element["bg"] += size;
                         var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        renew(item, to)
+                        renew(from, to)
                     }
                     return true;
                 }
@@ -191,8 +181,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
 })
 
-function init(){          
-    var newRow = document.getElementById("idleTable").insertRow(-1);
+function init(id){          
+    var newRow = document.getElementById("id").children["idleTable"].insertRow(-1);
     newRow.className = "Node"
     newRow.insertCell(0).innerHTML = 0;
     newRow.insertCell(1).innerHTML = MAX_SIZE;
@@ -207,9 +197,9 @@ function renew(from, to){
         var ed = rows[i].cells[1].innerHTML;
         var size = rows[i].cells[2].innerHTML;
         if( from["bg"] == bg && from["ed"] == ed && from["size"] == size){
-            bg = to["bg"];
-            ed = to["ed"];
-            size = to["size"];
+            rows[i].cells[0].innerHTML = to["bg"];
+            rows[i].cells[1].innerHTML = to["ed"];
+            rows[i].cells[2].innerHTML = to["size"];
         }
     }
 }
