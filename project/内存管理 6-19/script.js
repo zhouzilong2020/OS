@@ -1,207 +1,36 @@
-// 动态分区分配模拟
-
-// 链表节点
-function ListNode(item){
-    this.element = item;
-    this.next = null;
-}
-
-// 链表类
-function LinkedList(){
-    this.head = new ListNode()
-
-    if(typeof LinkedList._initialized == "undefined") {
-        // 插入
-        LinkedList.prototype.insert = function(item) {
-            let newNode = new ListNode(item);
-            newNode.next = this.head.next;
-            this.head.next = newNode;
-        }
-
-        // 删除
-        LinkedList.prototype.remove = function(nodeElement){
-            let p = this.head;
-            while(p.next != null){
-                if(p.next.element == nodeElement){
-                    let tem = p.next;
-                    p.next = tem.next;
-                    delete tem;
-                    return true;
-                }
-                p = p.next;
-            }
-            return false;
-        }
-    };
-}
-
-//  内存管理器
-function MemoryManager(maxSize){
-    this.maxSize = maxSize;
-    this.busyTable = new LinkedList()
-    this.idleTable = new LinkedList()
-    //TODO waiting list!!!!
-    // 初始化空闲表
-    this.idleTable.insert( {"bg": 0, "ed": this.maxSize, "size": this.maxSize} )
-    
-    if (typeof MemoryManager._initialized == "undefined") {
-        // 分配内存
-        MemoryManager.prototype.allocate = function(size, PID){
-            let p = this.idleTable.head;
-            while(p.next != null){
-                if(p.next.element["size"] >= size){ //找到了第一个合适分配的内存
-                    // 更新已使用内存表项
-                    let item = {"bg": p.next.element["bg"], "ed": p.next.element["bg"]+size, "PID" : PID, "size":size};
-                    this.busyTable.insert(item)
-                    var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                    // 更新页面
-                    let newRow = document.getElementById("busyTable").insertRow(-1);
-                    newRow.insertCell(0).innerHTML = item["PID"];
-                    newRow.insertCell(1).innerHTML = item["bg"];
-                    newRow.insertCell(2).innerHTML = item["ed"];
-                    newRow.insertCell(3).innerHTML = item["size"];
-                    newRow.insertCell(4).innerHTML =  "<td><button onclick=\"del(this)\">结束本进程</button></td>";
-
-                    if(p.next.element["size"] == size){ //剩余区域等于申请区域，则需要从表单中删除
-                        let tem = p.next;
-                        p.next = tem.next;
-                        delete tem;
-                    }
-                    else{   //剩余区域大于申请区域，只需要修改表项即可
-                        p.next.element["size"] -= size;
-                        p.next.element["bg"] += size;
-                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        renew(from, to)
-                    }
-                    return true;
-                }
-                p = p.next;
-            }
-            return false;
-        }
-
-        // 释放内存
-        MemoryManager.prototype.free = function(PID){
-            let p = this.busyTable.head;
-            let bg, ed;
-            let flag = 0;
-            while(p.next != null){
-                if(p.next.element["PID"] == PID){
-                    let tem = p.next;
-                    p.next = tem.next;
-                    // 记录释放内存的信息
-                    bg = tem.element["bg"];
-                    ed = tem.element["ed"];
-                    delete tem;
-                    flag = 1;
-                    break;
-                }
-                p = p.next;
-            }
-            if(flag){ //成功找到了这样的进程，释放内存资源
-                p = this.idleTable.head;
-                // 检查有无可以合并的区域
-                while(p.next != null){
-                    if( ed == p.next.element["bg"]){ //新区域的尾可以旧区域头链接
-                        
-                        var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        
-                        p.next.element['bg'] = bg;
-                        p.next.element['size'] += (ed - bg);
-                        
-                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        renew(from, to);
-
-                        flag = 0;
-                        break;
-                    }
-                    else if( bg == p.next.element["ed"]){ //新区域的头可以旧区域尾链接
-                        var from = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        
-                        p.next.element['ed'] = ed;
-                        p.next.element['size'] += (ed - bg);
-                        // 还需要检查能否进一步合并，新区域可能起到一个桥梁作用，合并前后两个区域
-                        let tem = p.next.next;
-                        if(tem != null){
-                            if(ed = tem.element["bg"]){ // 前后两个区域可以合并
-                                p.next.element['ed'] = tem.element["ed"];
-                                p.next.element['size'] += tem.element["size"];
-                                p.next.next = tem.next;
-                                delete tem;
-                            }
-                        }
-                        var to = {"bg" : p.next.element['bg'], "ed":  p.next.element['ed'], "size": p.next.element['size']}
-                        renew(from, to);
-
-                        flag = 0;
-                        break; 
-                    }
-                    p = p.next;
-                }
-                // 没有找到可以合并的区域
-                if(flag){
-                    p = this.idleTable.head;
-                    while(p.next != null){ // 根据启始地址大小插入
-                        if(p.next.element["bg"] > bg){
-                            let newNode = new ListNode({"bg":bg, "ed":ed, "size":ed-bg})
-                            newNode.next = p.next;
-                            p.next = newNode;
-
-                            // 更新页面
-                            let newRow = document.getElementById("idleTable").insertRow(-1);
-                            newRow.insertCell(0).innerHTML = bg;
-                            newRow.insertCell(1).innerHTML = ed;
-                            newRow.insertCell(2).innerHTML = ed-bg;
-                        
-                            break;
-                        }
-                        p = p.next;
-                    }
-                }
-                return true;
-            }
-            return false; 
-        }
-
-        MemoryManager.prototype.debug = function(){
-            this.busyTable.display()
-            this.idleTable.display()
-        }
-    }
-}
-
-const MAX_SIZE = 640;
+MAX_SIZE = 690;
 var cnt = 0;
-var manager;
-
-document.addEventListener('DOMContentLoaded', function(){
-    manager = new MemoryManager(MAX_SIZE);
-    init()
-//a/sd/asd/asd/as//
+document.addEventListener('DOMContentLoaded', ()=>{
+    // manager = new MemoryManager(MAX_SIZE);
+    // 初始化空闲区域表
+    addNodeToIdle('session1', 0, MAX_SIZE, MAX_SIZE);
+    addNodeToIdle('session2', 0, MAX_SIZE, MAX_SIZE);
+    var btn = document.querySelector("#add-btn");
+    btn.onclick = newJob;
+    btn.disabled = true
+    document.querySelector('#input_size').onkeyup = () => {
+        //every time you try to push a key
+        if (document.querySelector('#input_size').value.length > 0)
+            btn.disabled = false;
+        else
+           btn.disabled = true;
+    };
 
 })
 
-function init(id){          
-    var newRow = document.getElementById("id").children["idleTable"].insertRow(-1);
-    newRow.className = "Node"
-    newRow.insertCell(0).innerHTML = 0;
-    newRow.insertCell(1).innerHTML = MAX_SIZE;
-    newRow.insertCell(2).innerHTML = MAX_SIZE;
-}
-
-function renew(from, to){
-    var tb = document.getElementById("idleTable");
-    var rows = tb.rows;
-    for(var i = 0; i < rows.length; i++){
-        var bg = rows[i].cells[0].innerHTML;
-        var ed = rows[i].cells[1].innerHTML;
-        var size = rows[i].cells[2].innerHTML;
-        if( from["bg"] == bg && from["ed"] == ed && from["size"] == size){
-            rows[i].cells[0].innerHTML = to["bg"];
-            rows[i].cells[1].innerHTML = to["ed"];
-            rows[i].cells[2].innerHTML = to["size"];
-        }
-    }
+function addNodeToIdle(id, bg, ed, size, index = -1){
+    // 添加空闲区表节点
+    let newRow = document.getElementById(id).children["idleTable"].insertRow(index);
+    newRow.className = "Node";
+    let cell0 = newRow.insertCell(0);   //起始地址
+    let cell1 = newRow.insertCell(1);  //结束地址
+    let cell2 = newRow.insertCell(2);  //大小
+    cell0.className = 'bg';
+    cell1.className = 'ed';
+    cell2.className = 'size';
+    cell0.innerHTML = bg;
+    cell1.innerHTML = ed;
+    cell2.innerHTML = size;
 }
 
 function isValid(size){
@@ -220,21 +49,169 @@ function isValid(size){
     return false;
 }
 
-function newJob(){
+function newJob(){  //为两种算法分配分别分配内存
     let size = document.getElementById("input_size").value;
+    document.getElementById("input_size").value = '';
+    document.querySelector('#add-btn').disabled = true;
+
     if(isValid(size)){
-        size = parseInt(size);
-        if(!manager.allocate(size, cnt++)){
-            window.alert("当前内存碎片过多，请释放一些内存再试一试！");
+        size = Number(size);
+        cnt++;
+        if(!allocate('session1', size, cnt))
+            window.alert("MEM1 当前内存碎片过多，请释放一些内存再试一试！")
+        if(! allocate('session2', size, cnt)){
+            window.alert("MEM2 当前内存碎片过多，请释放一些内存再试一试！");
         }
     }
 }
 
-function del(e){
-    var tr = e.parentElement.parentElement;
-    var index = tr.rowIndex;
-    var table = document.getElementById("busyTable");
-    let PID = tr.firstElementChild.innerHTML;
-    manager.free(PID);
-    table.deleteRow(index);
+function allocate(id, size, PID){
+    let idleTable = document.getElementById(id).children["idleTable"];
+    let Nodes = idleTable.querySelectorAll(".Node");
+
+    if(id == 'session2'){   // 首次适应算法
+        for(let i = 0; i < Nodes.length; i++){
+            let bg = Nodes[i].querySelector(".bg").innerHTML;
+            let freeSize = Nodes[i].querySelector(".size").innerHTML;
+            if(size <= freeSize){ 
+                Nodes[i].querySelector(".bg").innerHTML -= (-size);
+                Nodes[i].querySelector(".size").innerHTML -= size;
+                addNodeToBusy(id, Number(bg), Number(bg)+Number(size), Number(size), PID)    //分配成功，添加到占用区表单
+                if(Nodes[i].querySelector(".size").innerHTML == '0' && Nodes.length >1){//空闲区刚好用完
+                    idleTable.deleteRow(i);
+                }
+                return true;
+            }
+        } 
+    }
+    else{   //最佳适应算法
+        let index = -1;
+        let min = MAX_SIZE+1;
+        let bg, freeSize;
+        for(let i = 0; i < Nodes.length; i++){
+            bg = Nodes[i].querySelector(".bg").innerHTML;
+            freeSize = Number(Nodes[i].querySelector(".size").innerHTML);
+            if(size <= freeSize && freeSize < min){ 
+                index = i;
+                min = freeSize;
+            }
+        } 
+        if(index != -1){
+            Nodes[index].querySelector(".bg").innerHTML -= (-size);
+            Nodes[index].querySelector(".size").innerHTML -= size;
+            addNodeToBusy(id, Number(bg), Number(bg)+Number(size), Number(size), PID)    //分配成功，添加到占用区表单
+            if(Nodes[index].querySelector(".size").innerHTML == '0' && Nodes.length >1){//空闲区刚好用完
+                idleTable.deleteRow(i);
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+function addNodeToBusy(id, bg, ed, size, PID){
+    // 初始化空闲区表
+    let newRow = document.getElementById(id).children["busyTable"].insertRow(-1);
+    newRow.className = "Node"
+    // 插入单元格
+    let cell0 = newRow.insertCell(0)    //PID
+    let cell1 = newRow.insertCell(1)    //起始地址
+    let cell2 = newRow.insertCell(2)    //终止地址
+    let cell3 = newRow.insertCell(3)    //size
+    // 类名
+    cell0.className = 'PID';
+    cell1.className = 'bg';
+    cell2.className = 'ed';
+    cell3.className = 'size';
+    // 赋值
+    cell0.innerHTML = PID;
+    cell1.innerHTML = bg;
+    cell2.innerHTML = ed;
+    cell3.innerHTML = size;
+    let btn = document.createElement("button");
+    btn.innerHTML = '结束进程'
+    btn.onclick = function(){free(id, btn)};
+    newRow.insertCell(4).append(btn) 
+    // = "<td><button onclick=\"del(this)\">结束本进程</button></td>";
+    // //删除按键
+}
+
+function free(id, e){
+    let tr = e.parentElement.parentElement;
+    let index = tr.rowIndex;
+    let busyTable = document.getElementById(id).children["busyTable"]
+    // 释放的内存信息
+    let x1 = busyTable.rows[index].cells[1].innerHTML; //起始地址
+    let x2 = busyTable.rows[index].cells[2].innerHTML; //结束地址
+    //从占用表中删除该进程
+    busyTable.deleteRow(index); 
+    let idleTable = document.getElementById(id).children["idleTable"]
+    // 将多出来的空间合并
+    let Nodes = idleTable.querySelectorAll(".Node")
+    let flag = 0;//找到恰当的位置
+    // 只有一个节点
+    if( Nodes.length == 1){ 
+        let y1 = Nodes[0].querySelector(".bg").innerHTML;
+        let y2 = Nodes[0].querySelector(".ed").innerHTML;
+        if(x2 == y1){
+            Nodes[0].querySelector(".bg").innerHTML = x1;
+            Nodes[0].querySelector(".size").innerHTML -= -(x2-x1);
+            flag = 1
+        }
+        else if(x1 == y2){
+            Nodes[0].querySelector(".ed").innerHTML = x2;
+            Nodes[0].querySelector(".size").innerHTML -= -(x2-x1);
+            flag = 1;
+        }
+    }
+    else{
+        for(let i = 0; i < Nodes.length-1; i++){
+            let y1 = Nodes[i].querySelector(".bg").innerHTML;
+            let y2 = Nodes[i].querySelector(".ed").innerHTML;
+            let z1 = Nodes[i+1].querySelector(".bg").innerHTML;
+            let z2 = Nodes[i+1].querySelector(".ed").innerHTML;
+            if(x2 == y1){
+                Nodes[0].querySelector(".bg").innerHTML = x1;
+                Nodes[0].querySelector(".size").innerHTML -= -(x2-x1);
+                flag = 1
+            }
+            // 中间情况
+            else if(y2 == x1 && x2 == z1){//[y1本来闲置区y2][x1释放区x2][z1本来闲置区z2]
+                Nodes[i].querySelector(".ed").innerHTML = z2;
+                Nodes[i].querySelector(".size").innerHTML -= -((x2-x1) + (z2-z1));
+                idleTable.deleteRow(i+2);
+                flag = 1;
+                break;
+            }
+            else if(y2 == x1){
+                Nodes[i].querySelector(".ed").innerHTML = x2;
+                Nodes[i].querySelector(".size").innerHTML -= -(x2-x1);
+                flag = 1;
+                break;
+            }
+            else if(x2 == z1){
+                Nodes[i+1].querySelector(".bg").innerHTML = x1;
+                Nodes[i+1].querySelector(".size").innerHTML -= -(x2-x1);
+                flag = 1;
+                break;
+            }
+            // 末尾
+            if(i == Nodes.length-2 && z2 == x1){
+                Nodes[i+1].querySelector(".ed").innerHTML = x2;
+                Nodes[i+1].querySelector(".size").innerHTML -= -(x2-x1);
+                flag = 1;
+                break;
+            }
+        }
+    }
+    if(!flag){//需要新建一个行
+        let index = 0;
+        for(; index < Nodes.length; index++){
+            if(Nodes[index].querySelector(".bg").innerHTML > x1){
+                addNodeToIdle(id, x1,x2,x2-x1,index+1);
+                break;
+            }
+        }
+    }
+
 }

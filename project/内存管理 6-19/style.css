@@ -21,7 +21,7 @@ footer{
 }
 
 #idleTable, #busyTable{
-    margin:5px;
+    margin:15px;
     float:left;
     border-collapse: collapse;
     position: relative;
@@ -35,10 +35,12 @@ footer{
 #session1{
     position: relative;
     float:left;
+    margin:15px;
 }
 #session2{
     position: relative;
     float:left;
+    margin:15px;
 }
 
 .input{
